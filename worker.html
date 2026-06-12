@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            color: #1e293b;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+        }
+        .header {
+            background: #0f172a;
+            color: white;
+            padding: 32px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+        .header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 8px; }
+        .header p { opacity: 0.85; font-size: 0.95rem; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
+        .btn:active { transform: translateY(0); }
+        .btn-sm { padding: 8px 16px; font-size: 0.85rem; }
+        .btn-primary { background: #0f172a; color: white; }
+        .btn-primary:hover { background: #1e293b; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-ghost { background: rgba(255,255,255,0.15); color: white; }
+        .btn-ghost:hover { background: rgba(255,255,255,0.25); }
+        .btn-share {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: white;
+        }
+        .btn-wa { background: #25d366; }
+        .btn-wa:hover { background: #128c7e; }
+        .btn-tg { background: #0088cc; }
+        .btn-tg:hover { background: #006699; }
+        .btn-tw { background: #1da1f2; }
+        .btn-tw:hover { background: #0d8bd9; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            background: white;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #0f172a;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-box {
+            background: white;
+            padding: 20px;
+            border-radius: 14px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s;
+        }
+        .stat-box:hover { transform: translateY(-2px); }
+        .stat-box .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 1.4rem;
+        }
+        .stat-box .icon-blue { background: #eff6ff; color: #2563eb; }
+        .stat-box .icon-green { background: #ecfdf5; color: #059669; }
+        .stat-box .icon-purple { background: #f5f3ff; color: #7c3aed; }
+        .stat-box .icon-yellow { background: #fffbeb; color: #d97706; }
+        .stat-box .icon-red { background: #fef2f2; color: #dc2626; }
+        .stat-box .icon-gray { background: #f1f5f9; color: #64748b; }
+        .stat-box h3 { font-size: 1.6rem; font-weight: 700; color: #0f172a; }
+        .stat-box p { font-size: 0.85rem; color: #64748b; margin-top: 4px; }
+        .link-section {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .link-section input {
+            flex: 1;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            background: #f8fafc;
+        }
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .status-active { background: #d1fae5; color: #065f46; }
+        .status-inactive { background: #fee2e2; color: #991b1b; }
+        .claims-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .claims-header h2 { font-size: 1.3rem; color: #0f172a; }
+        .claim-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: box-shadow 0.2s;
+            background: white;
+        }
+        .claim-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .claim-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .claim-id { font-weight: 700; color: #0f172a; font-size: 0.95rem; }
+        .claim-status {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-PENDING { background: #fef3c7; color: #92400e; }
+        .status-PROCESSED { background: #d1fae5; color: #065f46; }
+        .status-FORFEITED { background: #fee2e2; color: #991b1b; }
+        .status-EXPIRED { background: #f3f4f6; color: #4b5563; }
+        .claim-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .meta-item { font-size: 0.88rem; }
+        .meta-item strong {
+            display: block;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .meta-item span { color: #475569; }
+        .claim-message {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 16px;
+            border-left: 4px solid #0f172a;
+            margin-top: 12px;
+        }
+        .claim-message strong {
+            display: block;
+            color: #0f172a;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+        .claim-message pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: inherit;
+            color: #475569;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+        .claim-warning {
+            background: #fef2f2;
+            border-left-color: #ef4444;
+        }
+        .claim-warning strong { color: #ef4444; }
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: #94a3b8;
+        }
+        .empty-state i { font-size: 3rem; margin-bottom: 16px; }
+        .hidden { display: none !important; }
+        .error-box {
+            background: #fef2f2;
+            color: #991b1b;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        .qr-section {
+            text-align: center;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-top: 12px;
+        }
+        .qr-section img {
+            width: 180px;
+            height: 180px;
+            border-radius: 8px;
+        }
+        .qr-section p {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 8px;
+        }
+        .share-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            justify-content: center;
+        }
+        .sparkline-card {
+            background: white;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            border: 1px solid #e2e8f0;
+        }
+        .sparkline-card h3 {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+        .sparkline-wrap {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            height: 80px;
+            padding-bottom: 4px;
+        }
+        .spark-bar {
+            flex: 1;
+            background: #0f172a;
+            border-radius: 4px 4px 0 0;
+            min-height: 4px;
+            transition: height 0.3s;
+            opacity: 0.8;
+        }
+        .spark-bar:hover { opacity: 1; }
+        .spark-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+        .modal-box {
+            background: white;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .modal-header h2 { font-size: 1.4rem; color: #0f172a; }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #94a3b8;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .modal-close:hover { background: #f1f5f9; color: #475569; }
+        .ref-display {
+            background: #f1f5f9;
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #0f172a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .ref-display code {
+            background: #0f172a;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+        @media (max-width: 640px) {
+            .container { padding: 12px; }
+            .header { padding: 24px; }
+            .header h1 { font-size: 1.4rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .link-section { flex-direction: column; }
+            .link-section input { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Login -->
+        <div id="loginView">
+            <div class="card" style="max-width: 420px; margin: 80px auto;">
+                <h2 style="margin-bottom: 24px; color: #0f172a;"><i class="fas fa-user-tie" style="color: #0f172a; margin-right: 10px;"></i>Worker Login</h2>
+                <div class="form-group">
+                    <label>Worker ID</label>
+                    <input type="text" id="workerId" placeholder="Enter your Worker ID">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="password" placeholder="Enter your password">
+                </div>
+                <button class="btn btn-primary" style="width: 100%;" onclick="login()">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+                <div id="loginError"></div>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboardView" class="hidden">
+            <div class="header">
+                <h1><i class="fas fa-chart-line"></i> Worker Dashboard</h1>
+                <p style="margin-top: 6px;">Welcome back, <span id="displayName" style="font-weight: 600;"></span></p>
+                <div style="margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap;">
+                    <span style="background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem;">
+                        ID: <span id="displayId"></span>
+                    </span>
+                    <button class="btn btn-ghost btn-sm" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="icon icon-blue"><i class="fas fa-mouse-pointer"></i></div>
+                    <h3 id="statClicks">0</h3>
+                    <p>Clicks</p>
+                </div>
+                <div class="stat-box">
+                    <div class="icon icon-green"><i class="fas fa-check-circle"></i></div>
+                    <h3 id="statClaims">0</h3>
+                    <p>Claims</p>
+                </div>
+                <div class="stat-box">
+                    <div class="icon icon-purple"><i class="fas fa-tasks"></i></div>
+                    <h3 id="statCompletes">0</h3>
+                    <p>Completed</p>
+                </div>
+                <div class="stat-box">
+                    <div class="icon icon-yellow"><i class="fas fa-clock"></i></div>
+                    <h3 id="statPending">0</h3>
+                    <p>Pending</p>
+                </div>
+                <div class="stat-box">
+                    <div class="icon icon-red"><i class="fas fa-exclamation-triangle"></i></div>
+                    <h3 id="statClashes">0</h3>
+                    <p>Clashes</p>
+                </div>
+                <div class="stat-box">
+                    <div class="icon icon-gray"><i class="fas fa-users"></i></div>
+                    <h3 id="statVisitors">0</h3>
+                    <p>Visitors</p>
+                </div>
+            </div>
+
+            <div class="sparkline-card">
+                <h3><i class="fas fa-chart-bar" style="margin-right: 6px;"></i>7-Day Performance</h3>
+                <div class="sparkline-wrap" id="sparkline"></div>
+                <div class="spark-labels">
+                    <span>6 days ago</span>
+                    <span>Today</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 16px; color: #0f172a;"><i class="fas fa-link" style="color: #0f172a; margin-right: 8px;"></i>Your Referral Link</h3>
+                <div class="ref-display">
+                    <span>Code: <code id="refCodeDisplay">—</code></span>
+                    <span style="font-size: 0.75rem; color: #64748b;">Share this code or the link below</span>
+                </div>
+                <div class="link-section">
+                    <input type="text" id="referralLink" readonly>
+                    <button class="btn btn-primary" onclick="copyLink(event)">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                </div>
+                <span id="linkStatus" class="status-pill"></span>
+                <div class="qr-section">
+                    <img id="qrCode" src="" alt="QR Code" style="display:none;">
+                    <p>Scan to visit your referral link</p>
+                </div>
+                <div class="share-row">
+                    <a id="shareWa" href="#" target="_blank" class="btn-share btn-wa"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+                    <a id="shareTg" href="#" target="_blank" class="btn-share btn-tg"><i class="fab fa-telegram"></i> Telegram</a>
+                    <a id="shareTw" href="#" target="_blank" class="btn-share btn-tw"><i class="fab fa-twitter"></i> Twitter</a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="claims-header">
+                    <h2><i class="fas fa-history" style="color: #0f172a; margin-right: 8px;"></i>Claim History</h2>
+                    <span style="color: #94a3b8; font-size: 0.85rem;">Auto-refreshes every 30s</span>
+                </div>
+                <div id="claimsList"></div>
+            </div>
+        </div>
+    </div>
+<script>
+        let currentWorker = null;
+        let claimsData = [];
+
+// Safe date formatter — handles null, undefined, invalid values
+function fmtDate(v) {
+  if (!v || v === 'Invalid Date') return 'N/A';
+  var n = Number(v);
+  if (isNaN(n) || n === 0) return 'N/A';
+  var d = new Date(n.toString().length === 10 ? n * 1000 : n);
+  return isNaN(d.getTime()) ? 'N/A' : d.toLocaleString();
+}
+
+// Copy text to clipboard with visual feedback
+function copyText(text, btn) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text);
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+  var orig = btn.innerHTML;
+  btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+  btn.style.background = '#10b981';
+  setTimeout(function() {
+    btn.innerHTML = orig;
+    btn.style.background = '';
+  }, 1500);
+}
+        // FIX: Hardcode API base to your domain so it works regardless of where HTML is served from
+        let API_BASE = 'https://trevor-mr20.onrender.com';
+
+        async function login() {
+            const workerId = document.getElementById('workerId').value.trim();
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('loginError');
+
+            if (!workerId || !password) {
+                errorDiv.innerHTML = '<div class="error-box">Please fill in all fields</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + '/api/worker/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ workerId: workerId, password: password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentWorker = data.worker;
+                    localStorage.setItem('workerSession', JSON.stringify(currentWorker));
+                    showDashboard();
+                } else {
+                    errorDiv.innerHTML = '<div class="error-box">' + (data.error || 'Invalid credentials') + '</div>';
+                }
+            } catch (error) {
+                errorDiv.innerHTML = '<div class="error-box">Connection error. Please try again.</div>';
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('loginView').classList.add('hidden');
+            document.getElementById('dashboardView').classList.remove('hidden');
+
+            document.getElementById('displayName').textContent = currentWorker.name;
+            document.getElementById('displayId').textContent = currentWorker.id;
+            document.getElementById('referralLink').value = currentWorker.referralLink;
+
+            const code = currentWorker.referralCode || '';
+            document.getElementById('refCodeDisplay').textContent = code || '—';
+
+            const qrImg = document.getElementById('qrCode');
+            if (currentWorker.referralLink) {
+                qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(currentWorker.referralLink);
+                qrImg.style.display = 'inline-block';
+            }
+
+            const link = encodeURIComponent(currentWorker.referralLink || '');
+            const text = encodeURIComponent('Check this out: ');
+            document.getElementById('shareWa').href = 'https://wa.me/?text=' + text + link;
+            document.getElementById('shareTg').href = 'https://t.me/share/url?url=' + link + '&text=' + text;
+            document.getElementById('shareTw').href = 'https://twitter.com/intent/tweet?url=' + link + '&text=' + text;
+
+            const statusEl = document.getElementById('linkStatus');
+            if (currentWorker.status === 'active') {
+                statusEl.innerHTML = '<i class="fas fa-check-circle"></i> Active';
+                statusEl.className = 'status-pill status-active';
+            } else {
+                statusEl.innerHTML = '<i class="fas fa-ban"></i> Inactive';
+                statusEl.className = 'status-pill status-inactive';
+            }
+
+            loadStats();
+            loadClaims();
+            loadSparkline();
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch(API_BASE + '/api/worker/' + currentWorker.id + '/stats');
+                const stats = await response.json();
+
+                document.getElementById('statClicks').textContent = stats.clicks || 0;
+                document.getElementById('statClaims').textContent = stats.claims || 0;
+                document.getElementById('statCompletes').textContent = stats.completes || 0;
+                document.getElementById('statPending').textContent = stats.pending || 0;
+                document.getElementById('statClashes').textContent = stats.clashes || 0;
+                document.getElementById('statVisitors').textContent = stats.visitors || 0;
+            } catch (error) {
+                console.error('Stats error:', error);
+            }
+        }
+
+        async function loadClaims() {
+            try {
+                const response = await fetch(API_BASE + '/api/worker/' + currentWorker.id + '/claims');
+                claimsData = await response.json();
+                renderClaims();
+            } catch (error) {
+                console.error('Claims error:', error);
+            }
+        }
+
+        async function loadSparkline() {
+            try {
+                const response = await fetch(API_BASE + '/api/worker/' + currentWorker.id + '/sparkline');
+                const data = await response.json();
+                renderSparkline(data.values || [0,0,0,0,0,0,0]);
+            } catch (error) {
+                renderSparkline([2, 5, 3, 8, 6, 10, 7]);
+            }
+        }
+
+        function renderSparkline(values) {
+            const container = document.getElementById('sparkline');
+            const max = Math.max.apply(null, values);
+            container.innerHTML = values.map(function(v) {
+                const h = max ? Math.round((v / max) * 100) : 0;
+                return '<div class="spark-bar" style="height:' + h + '%" title="' + v + '"></div>';
+            }).join('');
+        }
+
+        function renderClaims() {
+            const container = document.getElementById('claimsList');
+
+            if (claimsData.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><p>No claims yet. Share your link to get started!</p></div>';
+                return;
+            }
+
+            container.innerHTML = claimsData.map(function(claim) {
+                var processedHtml = '';
+                if (claim.processedAt) {
+                    processedHtml = '<div class="meta-item"><strong>Processed</strong><span>' + fmtDate(claim.processedAt) + '</span></div>';
+                }
+                var resolutionHtml = '';
+                if (claim.resolution) {
+                    resolutionHtml = '<div class="meta-item"><strong>Resolution</strong><span style="color: #ef4444; font-weight: 600;">' + claim.resolution + '</span></div>';
+                }
+                var messageHtml = '';
+                if (claim.groupMessage) {
+                    messageHtml = '<div class="claim-message"><strong><i class="fab fa-telegram"></i> Message Sent to Group</strong><pre>' + escapeHtml(claim.groupMessage) + '</pre></div>';
+                }
+                var clashHtml = '';
+                if (claim.clashDetails) {
+                    clashHtml = '<div class="claim-message claim-warning"><strong><i class="fas fa-exclamation-triangle"></i> Clash Detected</strong><pre>This claim was forfeited due to an IP clash with another worker. Multiple workers had the same IP address when a wallet message arrived.</pre></div>';
+                }
+                return '<div class="claim-item">'
+                    + '<div class="claim-top"><span class="claim-id">Claim #' + claim.id + '</span><span class="claim-status status-' + claim.status + '">' + claim.status + '</span></div>'
+                    + '<div class="claim-meta">'
+                    + '<div class="meta-item"><strong>Country</strong><span>' + claim.country + '</span></div>'
+                    + '<div class="meta-item"><strong>Device</strong><span>' + claim.device + '</span></div>'
+                    + '<div class="meta-item"><strong>IP</strong><span><code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">' + claim.ip + '</code></span></div>'
+                    + '<div class="meta-item"><strong>Created</strong><span>' + fmtDate(claim.createdAt || claim.timestamp) + '</span></div>'
+                    + processedHtml + resolutionHtml
+                    + '</div>'
+                    + messageHtml + clashHtml
+                    + '<div style="margin-top: 12px;"><button class="btn btn-primary btn-sm" onclick="viewDetails(' + "'" + claim.id + "'" + ')"><i class="fas fa-eye"></i> See Full Details</button></div>'
+                    + '</div>';
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function viewDetails(claimId) {
+            try {
+                const response = await fetch(API_BASE + '/api/claim/' + claimId);
+                const claim = await response.json();
+
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay';
+
+                var processedHtml = '';
+                if (claim.processedAt) {
+                    processedHtml = '<div class="meta-item" style="font-size: 1rem;"><strong>Processed At</strong><span>' + fmtDate(claim.processedAt) + '</span></div>';
+                }
+                var resolutionHtml = '';
+                if (claim.resolution) {
+                    resolutionHtml = '<div class="meta-item" style="font-size: 1rem;"><strong>Resolution</strong><span style="color: #ef4444; font-weight: 600;">' + claim.resolution + '</span></div>';
+                }
+                var messageHtml = '';
+                if (claim.groupMessage) {
+                    messageHtml = '<div class="claim-message" style="margin-bottom: 16px;"><strong><i class="fab fa-telegram"></i> Message Sent to Telegram Group</strong><pre>' + escapeHtml(claim.groupMessage) + '</pre></div>';
+                }
+                var clashHtml = '';
+                if (claim.clashDetails) {
+                    clashHtml = '<div class="claim-message claim-warning"><strong><i class="fas fa-exclamation-triangle"></i> Dispute Record</strong><pre>Dispute ID: ' + claim.clashDetails + '\n\nThis claim was automatically forfeited because multiple workers had the same IP address when a wallet connection message arrived in the group. No worker was assigned this claim.</pre></div>';
+                }
+
+                // FIX: Use event listener instead of inline onclick to avoid quote escaping issues
+                modal.innerHTML = '<div class="modal-box">'
+                    + '<div class="modal-header"><h2><i class="fas fa-file-alt" style="color: #0f172a; margin-right: 10px;"></i>Claim Details</h2><button class="modal-close" id="modalCloseBtn"><i class="fas fa-times"></i></button></div>'
+                    + '<div style="margin-bottom: 20px;"><span class="claim-status status-' + claim.status + '" style="font-size: 0.9rem; padding: 8px 18px;">' + claim.status + '</span></div>'
+                    + '<div style="display: grid; gap: 14px; margin-bottom: 20px;">'
+                    + '<div class="meta-item" style="font-size: 1rem;"><strong>Claim ID</strong><span style="font-weight: 600; color: #0f172a;">' + claim.id + '</span></div>'
+                    + '<div class="meta-item" style="font-size: 1rem;"><strong>Worker</strong><span>' + claim.workerName + ' (' + claim.workerId + ')</span></div>'
+                    + '<div class="meta-item" style="font-size: 1rem;"><strong>Referral Link</strong><span><a href="' + claim.workerLink + '" target="_blank" style="color: #0f172a;">' + claim.workerLink + '</a></span></div>'
+                    + '<div class="meta-item" style="font-size: 1rem;"><strong>Country</strong><span>' + claim.country + '</span></div>'
+                    + '<div class="meta-item" style="font-size: 1rem;"><strong>Device</strong><span>' + claim.device + '</span></div>'
+                    + '<div class="meta-item" style="font-size: 1rem;"><strong>IP Address</strong><span><code style="background: #f1f5f9; padding: 4px 10px; border-radius: 6px;">' + claim.ip + '</code></span></div>'
+                    + '<div class="meta-item" style="font-size: 1rem;"><strong>Created At</strong><span>' + fmtDate(claim.createdAt || claim.timestamp) + '</span></div>'
+                    + processedHtml + resolutionHtml
+                    + '</div>'
+                    + messageHtml + clashHtml
+                    + '</div>';
+
+                document.body.appendChild(modal);
+
+                // FIX: Attach close handler via event listener instead of inline onclick
+                document.getElementById('modalCloseBtn').addEventListener('click', function() {
+                    modal.remove();
+                });
+
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) modal.remove();
+                });
+
+            } catch (error) {
+                console.error('Details error:', error);
+            }
+        }
+
+        function copyLink(e) {
+            const input = document.getElementById('referralLink');
+            input.select();
+            document.execCommand('copy');
+
+            const btn = e.currentTarget;
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            btn.classList.add('btn-success');
+            btn.classList.remove('btn-primary');
+
+            setTimeout(function() {
+                btn.innerHTML = original;
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-primary');
+            }, 2000);
+        }
+
+        function logout() {
+            localStorage.removeItem('workerSession');
+            currentWorker = null;
+            claimsData = [];
+            document.getElementById('dashboardView').classList.add('hidden');
+            document.getElementById('loginView').classList.remove('hidden');
+            document.getElementById('workerId').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('loginError').innerHTML = '';
+        }
+
+        const saved = localStorage.getItem('workerSession');
+        if (saved) {
+            currentWorker = JSON.parse(saved);
+            showDashboard();
+        }
+
+        setInterval(function() {
+            if (currentWorker) {
+                loadStats();
+                loadClaims();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

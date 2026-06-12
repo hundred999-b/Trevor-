@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Admin Panel</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0c10;color:#e2eaf4;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+#login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(0,200,255,.07),transparent 65%)}
+.login-box{width:360px;background:#141a22;border:1px solid #243448;border-radius:16px;padding:40px;position:relative}
+.login-box::before{content:'';position:absolute;top:0;left:20%;right:20%;height:2px;background:linear-gradient(90deg,transparent,#00d4ff,transparent)}
+.login-logo{font-size:11px;letter-spacing:3px;color:#00d4ff;text-transform:uppercase;margin-bottom:22px;font-family:monospace}
+.login-title{font-size:26px;font-weight:800;margin-bottom:4px}
+.login-sub{font-size:13px;color:#7a90a8;margin-bottom:28px}
+.lf{margin-bottom:14px}
+.lf label{display:block;font-size:10px;letter-spacing:1.2px;color:#7a90a8;text-transform:uppercase;margin-bottom:6px;font-family:monospace}
+.lf input{width:100%;background:#0f1318;border:1px solid #243448;border-radius:9px;padding:11px 13px;color:#e2eaf4;font-size:14px;outline:none;transition:border-color .2s}
+.lf input:focus{border-color:#00d4ff}
+#login-btn{width:100%;background:#00d4ff;color:#000;font-weight:700;font-size:15px;border:none;border-radius:9px;padding:13px;cursor:pointer;margin-top:6px;transition:opacity .2s}
+#login-btn:hover{opacity:.85}
+#login-btn:disabled{opacity:.5;cursor:not-allowed}
+#l-err{font-size:12px;color:#ff3d5a;text-align:center;margin-top:12px;min-height:18px;font-family:monospace}
+#app{display:none;flex-direction:column;min-height:100vh}
+.topbar{height:54px;background:#0f1318;border-bottom:1px solid #1f2d3d;display:flex;align-items:center;padding:0 24px;gap:14px;position:sticky;top:0;z-index:50}
+.tlogo{font-size:11px;color:#00d4ff;letter-spacing:3px;text-transform:uppercase;font-family:monospace}
+.tbadge{font-size:10px;background:rgba(0,212,255,.1);color:#00d4ff;border:1px solid rgba(0,212,255,.25);border-radius:4px;padding:3px 9px;font-family:monospace}
+.tout{margin-left:auto;background:none;border:1px solid #1f2d3d;color:#7a90a8;font-size:12px;padding:5px 13px;border-radius:6px;cursor:pointer}
+.tout:hover{border-color:#ff3d5a;color:#ff3d5a}
+.page{flex:1;padding:28px 24px 80px;max-width:1400px;margin:0 auto;width:100%}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.stat{background:#141a22;border:1px solid #1f2d3d;border-radius:12px;padding:18px 20px;position:relative;overflow:hidden}
+.stat::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px}
+.stat.s1::after{background:#00d4ff}.stat.s2::after{background:#00f077}.stat.s3::after{background:#ffb300}.stat.s4::after{background:#b388ff}.stat.s5::after{background:#ff3d5a}.stat.s6::after{background:#7a90a8}.stat.s7::after{background:#00d4ff}
+.slabel{font-size:9px;letter-spacing:1.5px;color:#7a90a8;text-transform:uppercase;margin-bottom:8px;font-family:monospace}
+.sval{font-size:28px;font-weight:800;line-height:1}
+.stat.s1 .sval{color:#00d4ff}.stat.s2 .sval{color:#00f077}.stat.s3 .sval{color:#ffb300}.stat.s4 .sval{color:#b388ff}.stat.s5 .sval{color:#ff3d5a}.stat.s6 .sval{color:#7a90a8}.stat.s7 .sval{color:#00d4ff}
+.tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;border-bottom:1px solid #1f2d3d;padding-bottom:12px}
+.tab{padding:10px 18px;background:none;border:1px solid #1f2d3d;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;color:#7a90a8;transition:all .2s;font-family:monospace}
+.tab:hover{border-color:#00d4ff;color:#00d4ff}
+.tab.active{background:rgba(0,212,255,.1);border-color:rgba(0,212,255,.3);color:#00d4ff}
+.tab .tbadge{display:inline-block;background:#ff3d5a;color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;margin-left:6px;font-weight:700}
+.card{background:#141a22;border:1px solid #1f2d3d;border-radius:14px;margin-bottom:20px;overflow:hidden;display:none}
+.card.active{display:block}
+.card-head{padding:16px 22px;border-bottom:1px solid #1f2d3d;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.card-head h2{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.card-body{padding:22px}
+.frow{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:end}
+.ff{flex:1;min-width:200px}
+.ff label{display:block;font-size:10px;letter-spacing:1px;color:#7a90a8;text-transform:uppercase;margin-bottom:5px;font-family:monospace}
+.ff input,.ff select{width:100%;background:#0f1318;border:1px solid #243448;border-radius:8px;padding:9px 12px;color:#e2eaf4;font-size:13px;outline:none;transition:border-color .2s}
+.ff input:focus,.ff select:focus{border-color:#00d4ff}
+.addbtn{background:#00d4ff;color:#000;font-weight:700;font-size:13px;border:none;border-radius:8px;padding:0 18px;cursor:pointer;height:37px;white-space:nowrap}
+.addbtn:hover{opacity:.85}
+.fmsg{margin-top:10px;font-size:12px;font-family:monospace;min-height:16px}
+.ok{color:#00f077}.err{color:#ff3d5a}
+.twrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{text-align:left;font-size:9px;letter-spacing:1.5px;color:#7a90a8;text-transform:uppercase;padding:0 12px 10px;border-bottom:1px solid #1f2d3d;font-family:monospace;white-space:nowrap}
+tbody tr{border-bottom:1px solid #1f2d3d;transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+td{padding:12px;vertical-align:middle}
+.wid{font-family:monospace;font-size:11px;background:rgba(0,212,255,.08);color:#00d4ff;border:1px solid rgba(0,212,255,.2);border-radius:4px;padding:2px 7px}
+.link-txt{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace;font-size:10px;color:#7a90a8}
+.no-link{font-family:monospace;font-size:10px;color:#3a4d62;font-style:italic}
+.used-link{font-family:monospace;font-size:10px;color:#ffb300}
+.code-sm{font-family:monospace;font-size:9px;color:#3a4d62;margin-top:2px}
+.nc{color:#00d4ff;font-family:monospace;font-weight:600}
+.ng{color:#00f077;font-family:monospace;font-weight:600}
+.na{color:#ffb300;font-family:monospace;font-weight:600}
+.nr{color:#ff3d5a;font-family:monospace;font-weight:600}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px}
+.dot.on{background:#00f077;box-shadow:0 0 6px #00f077}.dot.off{background:#3a4d62}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.abtn{background:none;border:1px solid #1f2d3d;color:#7a90a8;font-size:10px;padding:4px 9px;border-radius:4px;cursor:pointer;transition:all .2s;white-space:nowrap;font-family:monospace}
+.abtn:hover{border-color:#00d4ff;color:#00d4ff}
+.abtn.danger:hover{border-color:#ff3d5a;color:#ff3d5a}
+.abtn.warn:hover{border-color:#ffb300;color:#ffb300}
+.empty-row{text-align:center;padding:40px;color:#7a90a8;font-family:monospace}
+.timer{font-family:monospace;color:#ff3d5a;font-weight:700;font-size:12px}
+/* ADDITION 3 */
+.ref-code-row{display:flex;align-items:center;gap:6px}
+.ref-code{font-family:monospace;font-size:11px;background:rgba(0,212,255,.08);color:#00d4ff;border:1px solid rgba(0,212,255,.2);border-radius:4px;padding:2px 7px}
+.copy-btn{background:none;border:1px solid #1f2d3d;color:#7a90a8;font-size:9px;padding:2px 7px;border-radius:4px;cursor:pointer;font-family:monospace}
+.copy-btn:hover{border-color:#00d4ff;color:#00d4ff}
+/* ADDITION 7 */
+.map-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:16px}
+.map-card{background:#0f1318;border:1px solid #1f2d3d;border-radius:10px;padding:16px}
+.map-card h4{font-size:11px;color:#00d4ff;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;font-family:monospace}
+.map-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #1a2330;font-size:12px}
+.map-row:last-child{border-bottom:none}
+.map-row .bar-bg{flex:1;height:6px;background:#1a2330;border-radius:3px;margin:0 10px;overflow:hidden}
+.map-row .bar-fill{height:100%;background:#00d4ff;border-radius:3px}
+.map-row .pct{color:#7a90a8;font-family:monospace;font-size:10px}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);z-index:200;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:#141a22;border:1px solid #243448;border-radius:16px;padding:30px;width:480px;max-width:95vw;max-height:85vh;overflow-y:auto}
+.modal h3{font-size:17px;font-weight:800;margin-bottom:6px}
+.modal .msub{font-size:11px;color:#7a90a8;font-family:monospace;margin-bottom:20px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+.mcancel{background:none;border:1px solid #243448;color:#7a90a8;font-size:13px;padding:9px 18px;border-radius:8px;cursor:pointer}
+.mcancel:hover{color:#e2eaf4}
+.msave{background:#00d4ff;color:#000;font-weight:700;font-size:13px;border:none;border-radius:8px;padding:9px 22px;cursor:pointer}
+.msave:hover{opacity:.85}
+.msave.red{background:#ff3d5a;color:#fff}
+/* ADDITION 4 */
+.msave.ghost{background:none;border:1px solid #00d4ff;color:#00d4ff}
+.msave.ghost:hover{background:rgba(0,212,255,.1)}
+.mmsg{font-family:monospace;font-size:10px;margin-top:8px;min-height:14px}
+.dgrid{display:grid;gap:10px;margin-bottom:16px}
+.ditem{padding:12px;background:#0f1318;border-radius:8px;border:1px solid #1f2d3d}
+.ditem strong{display:block;color:#00d4ff;font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-family:monospace}
+.ditem span{color:#e2eaf4;font-size:13px}
+.msgbox{background:#0f1318;border-radius:8px;padding:16px;border-left:3px solid #00d4ff;margin-top:12px}
+.msgbox strong{display:block;color:#00d4ff;margin-bottom:8px;font-size:12px}
+.msgbox pre{white-space:pre-wrap;word-wrap:break-word;font-family:inherit;color:#7a90a8;font-size:12px;line-height:1.6}
+.msgbox.warn{border-left-color:#ff3d5a;background:rgba(255,61,90,.05)}
+.msgbox.warn strong{color:#ff3d5a}
+@media(max-width:800px){.stats{grid-template-columns:1fr 1fr}.frow{flex-direction:column}.ff{min-width:100%}.map-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">⬡ Referral System</div>
+    <div class="login-title">Admin Panel</div>
+    <div class="login-sub">Sign in to manage your workers</div>
+    <div class="lf">
+      <label>Username</label>
+      <input id="l-user" type="text" placeholder="Enter username" autocomplete="off" spellcheck="false"/>
+    </div>
+    <div class="lf">
+      <label>Password</label>
+      <input id="l-pass" type="password" placeholder="Enter password" autocomplete="off"/>
+    </div>
+    <button id="login-btn">Sign In</button>
+    <div id="l-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <span class="tlogo">⬡ REF-SYS</span>
+    <span class="tbadge">ADMIN</span>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:14px">
+      <span style="font-size:11px;color:#7a90a8;font-family:monospace"><span class="dot on" id="bot-dot"></span><span id="bot-txt">Bot Online</span></span>
+      <button class="tout" id="logout-btn">Sign Out</button>
+    </div>
+  </div>
+  <div class="page">
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat s1"><div class="slabel">Active Workers</div><div class="sval" id="st-workers">0</div></div>
+      <div class="stat s2"><div class="slabel">Total Clicks</div><div class="sval" id="st-clicks">0</div></div>
+      <div class="stat s3"><div class="slabel">Total Claims</div><div class="sval" id="st-claims">0</div></div>
+      <div class="stat s4"><div class="slabel">Pending</div><div class="sval" id="st-pending">0</div></div>
+      <div class="stat s5"><div class="slabel">Clashes</div><div class="sval" id="st-clashes">0</div></div>
+      <div class="stat s6"><div class="slabel">Expired</div><div class="sval" id="st-expired">0</div></div>
+      <div class="stat s7"><div class="slabel">Active Today</div><div class="sval" id="st-today">0</div></div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" data-tab="workers">Workers</button>
+      <button class="tab" data-tab="visitors">Visitors</button>
+      <button class="tab" data-tab="pending">Pending <span class="tbadge" id="bd-pending">0</span></button>
+      <button class="tab" data-tab="claims">All Claims</button>
+      <button class="tab" data-tab="disputes">Disputes <span class="tbadge" id="bd-disputes">0</span></button>
+      <button class="tab" data-tab="rules">Rules</button>
+      <button class="tab" data-tab="map">Click Map</button>
+    </div>
+
+    <!-- WORKERS TAB -->
+    <div class="card active" id="tab-workers">
+      <div class="card-head"><h2>👥 Workers</h2><button class="abtn" id="refresh-workers">↻ Refresh</button></div>
+      <div class="card-body">
+        <div style="background:#0f1318;border:1px solid #243448;border-radius:12px;padding:18px;margin-bottom:20px">
+          <div style="font-size:11px;color:#00d4ff;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;font-family:monospace">➕ Create New Worker</div>
+          <div class="frow">
+            <div class="ff"><label>Worker ID</label><input id="cw-id" type="text" placeholder="e.g. JOHN"/></div>
+            <div class="ff"><label>Full Name</label><input id="cw-name" type="text" placeholder="Worker name"/></div>
+            <div class="ff"><label>Password</label><input id="cw-pass" type="password" placeholder="Set password"/></div>
+          </div>
+          <div class="frow">
+            <div class="ff" style="flex:2"><label>Referral Link (optional)</label><input id="cw-link" type="text" placeholder="https://yoursite.com"/></div>
+            <button class="addbtn" id="cw-save">+ Create Worker</button>
+          </div>
+          <div class="fmsg" id="cw-msg"></div>
+        </div>
+        <div class="frow">
+          <div class="ff" style="flex:2"><label>Search</label><input id="sw-search" type="text" placeholder="ID, name, or link..."/></div>
+          <div class="ff"><label>Status</label>
+            <select id="sw-status">
+              <option value="">All</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div class="twrap">
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Referral Link</th><th>Ref Code</th><th>Clicks</th><th>Claims</th><th>Last Login</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="tb-workers"><tr><td colspan="9" class="empty-row">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISITORS TAB -->
+    <div class="card" id="tab-visitors">
+      <div class="card-head"><h2>👁 Visitors</h2></div>
+      <div class="card-body">
+        <div class="frow">
+          <div class="ff" style="flex:2"><label>Search</label><input id="sv-search" type="text" placeholder="IP, country, device..."/></div>
+          <div class="ff"><label>From</label><input id="sv-from" type="date"/></div>
+          <div class="ff"><label>To</label><input id="sv-to" type="date"/></div>
+        </div>
+        <div class="twrap">
+          <table>
+            <thead><tr><th>ID</th><th>Worker</th><th>IP</th><th>Country</th><th>Device</th><th>Referrer</th><th>Time</th></tr></thead>
+            <tbody id="tb-visitors"><tr><td colspan="7" class="empty-row">No visitors</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PENDING TAB -->
+    <div class="card" id="tab-pending">
+      <div class="card-head"><h2>⏳ Pending Claims</h2></div>
+      <div class="card-body">
+        <div class="frow">
+          <div class="ff" style="flex:1"><label>Search</label><input id="sp-search" type="text" placeholder="Worker ID, IP..."/></div>
+        </div>
+        <div class="twrap">
+          <table>
+            <thead><tr><th>Claim ID</th><th>Worker</th><th>IP</th><th>Country</th><th>Device</th><th>Time Left</th><th>Actions</th></tr></thead>
+            <tbody id="tb-pending"><tr><td colspan="7" class="empty-row">No pending claims</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLAIMS TAB -->
+    <div class="card" id="tab-claims">
+      <div class="card-head"><h2>📋 All Claims</h2></div>
+      <div class="card-body">
+        <div class="frow">
+          <div class="ff" style="flex:2"><label>Search</label><input id="sc-search" type="text" placeholder="Claim ID, worker ID, IP..."/></div>
+          <div class="ff"><label>Status</label>
+            <select id="sc-status">
+              <option value="">All</option>
+              <option value="PENDING">Pending</option>
+              <option value="PROCESSED">Processed</option>
+              <option value="FORFEITED">Forfeited</option>
+              <option value="EXPIRED">Expired</option>
+            </select>
+          </div>
+        </div>
+        <div class="twrap">
+          <table>
+            <thead><tr><th>Claim ID</th><th>Worker</th><th>IP</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
+            <tbody id="tb-claims"><tr><td colspan="6" class="empty-row">No claims</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- DISPUTES TAB -->
+    <div class="card" id="tab-disputes">
+      <div class="card-head"><h2>⚔ Disputes & Clashes</h2></div>
+      <div class="card-body">
+        <div class="frow">
+          <div class="ff" style="flex:1"><label>Search</label><input id="sd-search" type="text" placeholder="IP, worker ID..."/></div>
+        </div>
+        <div class="twrap">
+          <table>
+            <thead><tr><th>Dispute ID</th><th>IP</th><th>Workers</th><th>Claims</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
+            <tbody id="tb-disputes"><tr><td colspan="7" class="empty-row">No disputes</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- RULES TAB -->
+    <div class="card" id="tab-rules">
+      <div class="card-head"><h2>⚙ Rules Configuration</h2></div>
+      <div class="card-body" id="rules-body">
+        <div class="frow">
+          <div class="ff" style="flex:1"><label>Wallet Keyword</label><input id="rl-keyword" type="text" placeholder="Leave empty to match any message with IP"/></div>
+        </div>
+        <div class="frow">
+          <div class="ff" style="flex:1"><label>Auto-Forward Patterns (comma-separated)</label><input id="rl-patterns" type="text" placeholder="👀,✍️,✅"/></div>
+        </div>
+        <div class="frow">
+          <div class="ff"><label>Pending Timeout (hours)</label><input id="rl-timeout" type="number" min="1" max="48" value="2"/></div>
+          <div class="ff"><label>Match Field</label>
+            <select id="rl-field">
+              <option value="ip">IP Address</option>
+              <option value="wallet">Wallet Address</option>
+            </select>
+          </div>
+        </div>
+        <button class="addbtn" id="save-rules-btn" style="margin-top:10px">💾 Save Rules</button>
+        <div class="fmsg" id="rules-msg"></div>
+      </div>
+    </div>
+
+    <!-- CLICK MAP TAB -->
+    <div class="card" id="tab-map">
+      <div class="card-head"><h2>🗺 Referral Click Map</h2><button class="abtn" id="refresh-map">↻ Refresh</button></div>
+      <div class="card-body">
+        <div class="map-grid">
+          <div class="map-card">
+            <h4>🌍 Top Countries</h4>
+            <div id="map-countries"><div class="empty-row" style="padding:20px">No data</div></div>
+          </div>
+          <div class="map-card">
+            <h4>📱 Top Devices</h4>
+            <div id="map-devices"><div class="empty-row" style="padding:20px">No data</div></div>
+          </div>
+          <div class="map-card">
+            <h4>🔗 Top Referrers</h4>
+            <div id="map-referrers"><div class="empty-row" style="padding:20px">No data</div></div>
+          </div>
+          <div class="map-card">
+            <h4>👤 Top Workers</h4>
+            <div id="map-workers"><div class="empty-row" style="padding:20px">No data</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- EDIT WORKER MODAL -->
+<div class="overlay" id="md-edit">
+  <div class="modal">
+    <h3>✏️ Edit Worker</h3>
+    <div class="msub" id="ed-sub"></div>
+    <input type="hidden" id="ed-id"/>
+    <div class="lf"><label>Name</label><input id="ed-name" type="text"/></div>
+    <div class="lf"><label>Password (leave empty to keep)</label><input id="ed-pass" type="text" placeholder="New password"/></div>
+    <div class="lf"><label>Referral Link</label><input id="ed-link" type="text"/></div>
+    <div class="lf"><label>Status</label>
+      <select id="ed-status">
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="mcancel" data-close="md-edit">Cancel</button>
+      <button class="msave" id="ed-save">Save</button>
+    </div>
+    <div class="mmsg" id="ed-msg"></div>
+  </div>
+</div>
+
+<!-- LINK MODAL -->
+<div class="overlay" id="md-link">
+  <div class="modal">
+    <h3>🔗 Assign / Update Link</h3>
+    <div class="msub" id="lk-sub"></div>
+    <div class="lf"><label>Destination URL</label><input id="lk-url" type="text" placeholder="https://yoursite.com/page"/></div>
+    <div class="modal-actions">
+      <button class="mcancel" data-close="md-link">Cancel</button>
+      <button class="msave ghost" id="lk-regen">🔄 Regenerate Code</button>
+      <button class="msave" id="lk-save">Save Link</button>
+    </div>
+    <div class="mmsg" id="lk-msg"></div>
+  </div>
+</div>
+
+<!-- CLAIM DETAILS MODAL -->
+<div class="overlay" id="md-claim">
+  <div class="modal" style="width:560px">
+    <h3>📄 Claim Details</h3>
+    <div class="msub" id="cl-sub"></div>
+    <div id="cl-body"></div>
+    <div class="modal-actions">
+      <button class="mcancel" data-close="md-claim">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="overlay" id="md-confirm">
+  <div class="modal">
+    <h3 id="cf-title">Confirm</h3>
+    <div class="msub" id="cf-info"></div>
+    <div class="modal-actions">
+      <button class="mcancel" data-close="md-confirm">Cancel</button>
+      <button class="msave red" id="cf-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+<script>
+var API = '';  // same origin - admin is on Render server
+var workersData = [], visitorsData = [], claimsData = [], pendingData = [], disputesData = [], rulesData = {};
+var tmpId = '', tmpName = '', tmpCur = '';
+
+// Safe date formatter — handles null, undefined, invalid values
+function fmtDate(v) {
+  if (!v || v === 'Invalid Date') return 'N/A';
+  var n = Number(v);
+  if (isNaN(n) || n === 0) return 'N/A';
+  var d = new Date(n.toString().length === 10 ? n * 1000 : n);
+  return isNaN(d.getTime()) ? 'N/A' : d.toLocaleString();
+}
+
+// -- AUTH (completely untouched) --
+async function doLogin() {
+  var u = document.getElementById('l-user').value.trim();
+  var p = document.getElementById('l-pass').value;
+  var err = document.getElementById('l-err');
+  var btn = document.getElementById('login-btn');
+  err.textContent = '';
+  if (!u || !p) { err.textContent = 'Please enter username and password'; return; }
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    var resp = await fetch(API + '/api/admin/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: u, password: p })
+    });
+    var data = await resp.json();
+    if (!data.success) throw new Error(data.error || 'Login failed');
+    localStorage.setItem('adminSession', 'true');
+    localStorage.setItem('adminUser', u);
+    localStorage.setItem('adminPass', p);
+    showApp();
+  } catch(e) {
+    err.textContent = e.message === 'Failed to fetch' ? 'Cannot reach server.' : e.message;
+  }
+  btn.disabled = false; btn.textContent = 'Sign In';
+}
+
+function doLogout() {
+  localStorage.removeItem('adminSession');
+  localStorage.removeItem('adminUser');
+  localStorage.removeItem('adminPass');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('l-pass').value = '';
+  document.getElementById('l-err').textContent = '';
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  loadAll();
+}
+
+// -- API --
+async function api(method, url, body) {
+  var opts = { method: method, headers: { 'Content-Type': 'application/json' } };
+  var user = localStorage.getItem('adminUser');
+  var pass = localStorage.getItem('adminPass');
+  if (user && pass) {
+    opts.headers['Authorization'] = 'Basic ' + btoa(user + ':' + pass);
+  }
+  if (body) opts.body = JSON.stringify(body);
+  var r = await fetch(API + url, opts);
+  return r.json();
+}
+
+// -- DATA LOADING --
+async function loadAll() {
+  await Promise.all([loadStats(), loadWorkers(), loadVisitors(), loadPending(), loadClaims(), loadDisputes(), loadRules(), checkBot(), loadClickMap()]);
+}
+
+async function loadStats() {
+  try {
+    var s = await api('GET', '/api/admin/stats');
+    document.getElementById('st-workers').textContent = s.activeWorkers || 0;
+    document.getElementById('st-clicks').textContent = s.totalClicks || 0;
+    document.getElementById('st-claims').textContent = s.totalClaims || 0;
+    document.getElementById('st-pending').textContent = s.pendingClaims || 0;
+    document.getElementById('st-clashes').textContent = s.clashCount || 0;
+    document.getElementById('st-expired').textContent = s.expiredCount || 0;
+    document.getElementById('st-today').textContent = s.activeToday || 0;
+    document.getElementById('bd-pending').textContent = s.pendingClaims || 0;
+    document.getElementById('bd-disputes').textContent = s.clashCount || 0;
+  } catch(e) { console.error('stats', e); }
+}
+
+async function loadWorkers() {
+  try { var d = await api('GET', '/api/admin/workers'); workersData = Array.isArray(d) ? d : (d.workers || []); renderWorkers(); }
+  catch(e) { console.error('workers', e); }
+}
+
+async function loadVisitors() {
+  try { var d = await api('GET', '/api/admin/visitors'); visitorsData = Array.isArray(d) ? d : []; renderVisitors(); }
+  catch(e) { console.error('visitors', e); }
+}
+
+async function loadPending() {
+  try { var d = await api('GET', '/api/admin/pending'); pendingData = Array.isArray(d) ? d : []; renderPending(); }
+  catch(e) { console.error('pending', e); }
+}
+
+async function loadClaims() {
+  try { var d = await api('GET', '/api/admin/claims'); claimsData = Array.isArray(d) ? d : []; renderClaims(); }
+  catch(e) { console.error('claims', e); }
+}
+
+async function loadDisputes() {
+  try { var d = await api('GET', '/api/admin/disputes'); disputesData = Array.isArray(d) ? d : []; renderDisputes(); }
+  catch(e) { console.error('disputes', e); }
+}
+
+async function loadRules() {
+  try {
+    var d = await api('GET', '/api/admin/rules');
+    rulesData = d || {};
+    document.getElementById('rl-keyword').value = rulesData.walletKeyword || '';
+    document.getElementById('rl-patterns').value = (rulesData.autoForwardPatterns || []).join(',');
+    document.getElementById('rl-timeout').value = rulesData.pendingTimeoutHours || 2;
+    document.getElementById('rl-field').value = rulesData.matchField || 'ip';
+  } catch(e) { console.error('rules', e); }
+}
+
+async function checkBot() {
+  try {
+    var d = await api('GET', '/api/admin/group-bot-status');
+    var dot = document.getElementById('bot-dot');
+    var txt = document.getElementById('bot-txt');
+    if (d.status === 'ONLINE') { dot.className = 'dot on'; txt.textContent = 'Bot Online'; }
+    else { dot.className = 'dot off'; txt.textContent = 'Bot Offline'; }
+  } catch(e) { document.getElementById('bot-dot').className = 'dot off'; document.getElementById('bot-txt').textContent = 'Bot Error'; }
+}
+
+async function loadClickMap() {
+  try { var d = await api('GET', '/api/admin/click-map'); renderClickMap(d || {}); }
+  catch(e) { console.error('click-map', e); }
+}
+
+// -- RENDERING --
+function renderWorkers() {
+  var tb = document.getElementById('tb-workers');
+  var search = document.getElementById('sw-search').value.toLowerCase();
+  var status = document.getElementById('sw-status').value;
+  var filtered = workersData;
+  if (search) filtered = filtered.filter(function(w) {
+    return (w.id||'').toLowerCase().includes(search) || (w.name||'').toLowerCase().includes(search) || (w.referral_link||'').toLowerCase().includes(search) || (w.referral_code||'').toLowerCase().includes(search);
+  });
+  if (status) filtered = filtered.filter(function(w) { return w.status === status; });
+  if (!filtered.length) { tb.innerHTML = '<tr><td colspan="9" class="empty-row">No workers</td></tr>'; return; }
+  tb.innerHTML = filtered.map(function(w) {
+    // ADDITION 1 & 2: Use referralCode to build full URL
+    var refUrl = w.referral_code ? 'https://hyperliqiud-community.xyz/?ref=' + w.referral_code : (w.referral_link || '');
+    var code = w.referral_code || '';
+    return '<tr>'
+      + '<td><span class="wid">' + w.id + '</span></td>'
+      + '<td><b>' + w.name + '</b></td>'
+      + '<td>' + (refUrl ? '<div class="link-txt" title="' + refUrl + '">' + refUrl + '</div>' : '<span class="no-link">No link</span>') + '</td>'
+      // ADDITION 3: Referral code column with copy button
+      + '<td>' + (code ? '<div class="ref-code-row"><span class="ref-code">' + code + '</span><button class="copy-btn" data-copy="' + refUrl + '">Copy</button></div>' : '<span class="no-link">—</span>') + '</td>'
+      + '<td><span class="nc">' + (w.clicks||0) + '</span></td>'
+      + '<td><span class="ng">' + (w.claims||0) + '</span></td>'
+      + '<td>' + (w.last_login_at ? fmtDate(w.last_login_at) : '<span style="color:#3a4d62">Never</span>') + '</td>'
+      + '<td><span class="dot ' + (w.status==='active'?'on':'off') + '"></span><span style="font-size:12px;color:' + (w.status==='active'?'#00f077':'#7a90a8') + '">' + w.status + '</span></td>'
+      + '<td><div class="acts">'
+      + '<button class="abtn" data-a="ed" data-id="' + w.id + '">Edit</button>'
+      + '<button class="abtn" data-a="lk" data-id="' + w.id + '">Link</button>'
+      + '<button class="abtn ' + (w.status==='active'?'warn':'') + '" data-a="tg" data-id="' + w.id + '">' + (w.status==='active'?'Deactivate':'Activate') + '</button>'
+      + '<button class="abtn danger" data-a="dl" data-id="' + w.id + '">Delete</button>'
+      + '</div></td></tr>';
+  }).join('');
+}
+
+function renderVisitors() {
+  var tb = document.getElementById('tb-visitors');
+  var search = document.getElementById('sv-search').value.toLowerCase();
+  var from = document.getElementById('sv-from').value;
+  var to = document.getElementById('sv-to').value;
+  var filtered = visitorsData;
+  if (search) filtered = filtered.filter(function(v) {
+    return (v.ip||'').toLowerCase().includes(search) || (v.country||'').toLowerCase().includes(search) || (v.device||'').toLowerCase().includes(search);
+  });
+  if (from) filtered = filtered.filter(function(v) { return v.timestamp >= new Date(from).getTime(); });
+  if (to) filtered = filtered.filter(function(v) { return v.timestamp <= new Date(to).getTime(); });
+  if (!filtered.length) { tb.innerHTML = '<tr><td colspan="7" class="empty-row">No visitors</td></tr>'; return; }
+  tb.innerHTML = filtered.map(function(v) {
+    return '<tr><td>' + v.id + '</td><td>' + (v.workerId||'N/A') + '</td><td><span class="wid">' + v.ip + '</span></td><td>' + v.country + '</td><td>' + v.device + '</td><td>' + v.referrer + '</td><td>' + fmtDate(v.timestamp) + '</td></tr>';
+  }).join('');
+}
+
+function renderPending() {
+  var tb = document.getElementById('tb-pending');
+  var search = document.getElementById('sp-search').value.toLowerCase();
+  var filtered = pendingData;
+  if (search) filtered = filtered.filter(function(p) {
+    return (p.worker_id||'').toLowerCase().includes(search) || (p.ip||'').includes(search);
+  });
+  if (!filtered.length) { tb.innerHTML = '<tr><td colspan="7" class="empty-row">No pending</td></tr>'; return; }
+  tb.innerHTML = filtered.map(function(p) {
+    // ADDITION 6: Live timer data attribute
+    var expires = p.expiresAt || (p.createdAt + (rulesData.pendingTimeoutHours||2)*3600000);
+    return '<tr><td><span class="wid">' + p.id + '</span></td><td>' + (p.worker_name || p.worker_id || 'Unknown') + '</td><td><span class="wid">' + p.ip + '</span></td><td>' + (p.country||'Unknown') + '</td><td>' + (p.device||'Unknown') + '</td>'
+      + '<td><span class="timer" data-expires="' + expires + '">' + (p.timeRemainingText||'') + '</span><div class="code-sm">' + fmtDate(p.createdAt || p.timestamp) + '</div></td>'
+      + '<td><div class="acts">'
+      + '<button class="abtn" data-a="vc" data-id="' + p.id + '">View</button>'
+      + '<button class="abtn warn" data-a="forfeit" data-id="' + p.id + '">Forfeit</button>'
+      + '<button class="abtn" data-a="extend" data-id="' + p.id + '">+30m</button>'
+      + '</div></td></tr>';
+  }).join('');
+}
+
+function renderClaims() {
+  var tb = document.getElementById('tb-claims');
+  var search = document.getElementById('sc-search').value.toLowerCase();
+  var status = document.getElementById('sc-status').value;
+  var filtered = claimsData;
+  if (search) filtered = filtered.filter(function(c) {
+    return (c.id||'').toLowerCase().includes(search) || (c.workerId||'').toLowerCase().includes(search) || (c.ip||'').includes(search);
+  });
+  if (status) filtered = filtered.filter(function(c) { return c.status === status; });
+  if (!filtered.length) { tb.innerHTML = '<tr><td colspan="6" class="empty-row">No claims</td></tr>'; return; }
+  tb.innerHTML = filtered.map(function(c) {
+    return '<tr><td><span class="wid">' + c.id + '</span></td><td>' + c.workerId + '</td><td><span class="wid">' + c.ip + '</span></td>'
+      + '<td><span class="dot ' + (c.status==='PROCESSED'?'on':c.status==='PENDING'?'na':'off') + '"></span><span style="font-size:12px;color:' + (c.status==='PROCESSED'?'#00f077':c.status==='PENDING'?'#ffb300':'#ff3d5a') + '">' + c.status + '</span></td>'
+      + '<td><div class="code-sm">Created: ' + fmtDate(c.createdAt || c.timestamp) + '</div>' + (c.processedAt?'<div class="code-sm" style="color:#00d4ff">Processed: ' + fmtDate(c.processedAt) + '</div>':'') + '</td>'
+      + '<td><button class="abtn" data-a="vc" data-id="' + c.id + '">View</button></td></tr>';
+  }).join('');
+}
+
+function renderDisputes() {
+  var tb = document.getElementById('tb-disputes');
+  var search = document.getElementById('sd-search').value.toLowerCase();
+  var filtered = disputesData;
+  if (search) filtered = filtered.filter(function(d) {
+    return (d.ip||'').includes(search) || d.workerIds.some(function(id){return id.toLowerCase().includes(search)});
+  });
+  if (!filtered.length) { tb.innerHTML = '<tr><td colspan="7" class="empty-row">No disputes</td></tr>'; return; }
+  tb.innerHTML = filtered.map(function(d) {
+    return '<tr><td><span class="wid">' + d.id + '</span></td><td><span class="wid">' + d.ip + '</span></td><td>' + d.workerIds.join(', ') + '</td><td>' + d.claimIds.length + '</td>'
+      + '<td><span class="nr">' + d.resolution + '</span></td><td>' + fmtDate(d.timestamp) + '</td>'
+      + '<td><div class="acts">'
+      + '<button class="abtn" data-a="vd" data-id="' + d.id + '">View</button>'
+      + '<button class="abtn warn" data-a="resolve-forfeit" data-id="' + d.id + '">Forfeit All</button>'
+      + '</div></td></tr>';
+  }).join('');
+}
+
+// ADDITION 7: Click map rendering
+function renderClickMap(data) {
+  function renderList(elId, items, labelKey, valueKey) {
+    var el = document.getElementById(elId);
+    if (!items || !items.length) { el.innerHTML = '<div class="empty-row" style="padding:20px">No data</div>'; return; }
+    var max = Math.max.apply(null, items.map(function(i){return i[valueKey]||0}));
+    el.innerHTML = items.map(function(i) {
+      var pct = max ? Math.round((i[valueKey]/max)*100) : 0;
+      return '<div class="map-row"><span>' + (i[labelKey]||'Unknown') + '</span><div class="bar-bg"><div class="bar-fill" style="width:' + pct + '%"></div></div><span class="pct">' + (i[valueKey]||0) + '</span></div>';
+    }).join('');
+  }
+  renderList('map-countries', data.countries, 'country', 'count');
+  renderList('map-devices', data.devices, 'device', 'count');
+  renderList('map-referrers', data.referrers, 'referrer', 'count');
+  renderList('map-workers', data.workers, 'worker_id', 'count');
+}
+
+// -- ACTIONS --
+function showTab(tab) {
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active')});
+  document.querySelectorAll('.card').forEach(function(c){c.classList.remove('active')});
+  document.querySelector('.tab[data-tab="' + tab + '"]').classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+async function createWorker() {
+  var id = document.getElementById('cw-id').value.trim().toUpperCase();
+  var name = document.getElementById('cw-name').value.trim();
+  var pass = document.getElementById('cw-pass').value;
+  var link = document.getElementById('cw-link').value.trim();
+  var msg = document.getElementById('cw-msg');
+  msg.textContent = '';
+  if (!id || !name || !pass) { msg.className = 'fmsg err'; msg.textContent = 'ID, name and password required'; return; }
+  if (!/^[A-Z0-9\-_]{3,20}$/.test(id)) { msg.className = 'fmsg err'; msg.textContent = 'ID: 3-20 chars (A-Z, 0-9, -, _)'; return; }
+  if (pass.length < 4) { msg.className = 'fmsg err'; msg.textContent = 'Password min 4 chars'; return; }
+  // ADDITION 1: Auto-generate referral code
+  var ts = Date.now().toString(36).slice(-4).toUpperCase();
+  var refCode = id.replace(/[^A-Z0-9]/gi, '').slice(0, 6).toUpperCase() + ts;
+  var fullUrl = 'https://hyperliqiud-community.xyz/?ref=' + refCode;
+  try {
+    var d = await api('POST', '/api/admin/workers', { workerId: id, name: name, password: pass, referralLink: link || undefined, referralCode: refCode });
+    if (!d.success) throw new Error(d.error);
+    // ADDITION 2: Show full URL in success message
+    msg.className = 'fmsg ok'; msg.textContent = '✓ Created ' + (d.worker ? d.worker.workerId || d.worker.id : id) + ' — Full URL: ' + fullUrl;
+    document.getElementById('cw-id').value = ''; document.getElementById('cw-name').value = '';
+    document.getElementById('cw-pass').value = ''; document.getElementById('cw-link').value = '';
+    loadWorkers(); loadStats();
+  } catch(e) { msg.className = 'fmsg err'; msg.textContent = '✗ ' + e.message; }
+}
+
+function editWorker(id) {
+  var w = workersData.find(function(x){return x.id === id});
+  if (!w) return;
+  document.getElementById('ed-id').value = w.id;
+  document.getElementById('ed-name').value = w.name;
+  document.getElementById('ed-pass').value = '';
+  document.getElementById('ed-link').value = w.referralLink || '';
+  document.getElementById('ed-status').value = w.status || 'active';
+  document.getElementById('ed-sub').textContent = w.id + ' — ' + w.name;
+  document.getElementById('ed-msg').textContent = '';
+  openModal('md-edit');
+}
+
+async function saveEditWorker() {
+  var id = document.getElementById('ed-id').value;
+  var name = document.getElementById('ed-name').value.trim();
+  var pass = document.getElementById('ed-pass').value;
+  var link = document.getElementById('ed-link').value.trim();
+  var status = document.getElementById('ed-status').value;
+  var msg = document.getElementById('ed-msg');
+  try {
+    var d = await api('PUT', '/api/admin/workers/' + id, { name: name, password: pass || undefined, referralLink: link, status: status });
+    if (!d.success) throw new Error(d.error);
+    msg.className = 'mmsg ok'; msg.textContent = '✓ Saved';
+    loadWorkers(); loadStats();
+    setTimeout(function(){ closeModal('md-edit'); }, 800);
+  } catch(e) { msg.className = 'mmsg err'; msg.textContent = '✗ ' + e.message; }
+}
+
+function openLinkModal(id, cur, name) {
+  tmpId = id;
+  document.getElementById('lk-sub').textContent = (name || id) + ' (' + id + ')';
+  document.getElementById('lk-url').value = cur || '';
+  document.getElementById('lk-msg').textContent = '';
+  openModal('md-link');
+}
+
+async function saveLink() {
+  var url = document.getElementById('lk-url').value.trim();
+  var msg = document.getElementById('lk-msg');
+  if (!url) { msg.className = 'mmsg err'; msg.textContent = 'URL required'; return; }
+  if (!/^https?:\/\//.test(url)) { msg.className = 'mmsg err'; msg.textContent = 'Must start with http:// or https://'; return; }
+  try {
+    var d = await api('PUT', '/api/admin/workers/' + tmpId + '/link', { referralLink: url });
+    if (!d.success) throw new Error(d.error);
+    msg.className = 'mmsg ok'; msg.textContent = '✓ Saved. Code: ' + (d.referralCode || '—');
+    loadWorkers(); loadStats();
+    setTimeout(function(){ closeModal('md-link'); }, 1000);
+  } catch(e) { msg.className = 'mmsg err'; msg.textContent = '✗ ' + e.message; }
+}
+
+// ADDITION 4: Regenerate code function
+async function regenerateCode() {
+  var msg = document.getElementById('lk-msg');
+  var ts = Date.now().toString(36).slice(-4).toUpperCase();
+  var newCode = tmpId.replace(/[^A-Z0-9]/gi, '').slice(0, 6).toUpperCase() + ts;
+  var fullUrl = 'https://hyperliqiud-community.xyz/?ref=' + newCode;
+  try {
+    var d = await api('PUT', '/api/admin/workers/' + tmpId + '/link', { referralCode: newCode });
+    if (!d.success) throw new Error(d.error);
+    msg.className = 'mmsg ok'; msg.textContent = '✓ New code: ' + newCode + ' — ' + fullUrl;
+    loadWorkers(); loadStats();
+  } catch(e) { msg.className = 'mmsg err'; msg.textContent = '✗ ' + e.message; }
+}
+
+async function toggleW(id) {
+  try { await api('POST', '/api/admin/workers/' + id + '/toggle-status'); loadWorkers(); loadStats(); }
+  catch(e) { alert(e.message); }
+}
+
+function confirmDelWorker(id, name) {
+  tmpId = id;
+  document.getElementById('cf-title').textContent = 'Delete Worker';
+  document.getElementById('cf-info').textContent = 'Permanently delete ' + (name || id) + '? This cannot be undone.';
+  document.getElementById('cf-ok').dataset.action = 'del-worker';
+  openModal('md-confirm');
+}
+
+async function doDelWorker() {
+  try { await api('DELETE', '/api/admin/workers/' + tmpId); closeModal('md-confirm'); loadWorkers(); loadStats(); }
+  catch(e) { alert(e.message); }
+}
+
+async function viewClaim(id) {
+  try {
+    var c = await api('GET', '/api/claim/' + id);
+    document.getElementById('cl-sub').innerHTML = '<span class="dot ' + (c.status==='PROCESSED'?'on':c.status==='PENDING'?'na':'off') + '"></span> ' + c.status;
+    var html = '<div class="dgrid">'
+      + '<div class="ditem"><strong>Claim ID</strong><span style="color:#00d4ff;font-weight:700">' + c.id + '</span></div>'
+      + '<div class="ditem"><strong>Worker</strong><span>' + (c.workerName||'Unknown') + ' (' + c.workerId + ')</span></div>'
+      + '<div class="ditem"><strong>Link</strong><span><a href="' + (c.workerLink||'') + '" target="_blank" style="color:#00d4ff">' + (c.workerLink||'N/A') + '</a></span></div>'
+      + '<div class="ditem"><strong>Country</strong><span>' + (c.country||'Unknown') + '</span></div>'
+      + '<div class="ditem"><strong>Device</strong><span>' + (c.device||'Unknown') + '</span></div>'
+      + '<div class="ditem"><strong>IP</strong><span class="wid">' + (c.ip||'Unknown') + '</span></div>'
+      + '<div class="ditem"><strong>Created</strong><span>' + fmtDate(c.createdAt || c.timestamp) + '</span></div>';
+    if (c.processedAt) html += '<div class="ditem"><strong>Processed</strong><span>' + fmtDate(c.processedAt) + '</span></div>';
+    if (c.resolution) html += '<div class="ditem"><strong>Resolution</strong><span style="color:#ff3d5a;font-weight:600">' + c.resolution + '</span></div>';
+    html += '</div>';
+    if (c.groupMessage) html += '<div class="msgbox"><strong>📨 Telegram Message</strong><pre>' + esc(c.groupMessage) + '</pre></div>';
+    if (c.clashDetails) html += '<div class="msgbox warn"><strong>⚠️ Clash Record</strong><pre>Dispute: ' + c.clashDetails + '\n\nForfeited — multiple workers shared this IP when a wallet message arrived.</pre></div>';
+    document.getElementById('cl-body').innerHTML = html;
+    openModal('md-claim');
+  } catch(e) { console.error('claim', e); }
+}
+
+async function viewDispute(id) {
+  var d = disputesData.find(function(x){return x.id === id});
+  if (!d) return;
+  document.getElementById('cl-sub').innerHTML = '<span class="nr">' + d.resolution + '</span>';
+  var html = '<div class="dgrid">'
+    + '<div class="ditem"><strong>Dispute ID</strong><span>' + d.id + '</span></div>'
+    + '<div class="ditem"><strong>IP</strong><span class="wid">' + d.ip + '</span></div>'
+    + '<div class="ditem"><strong>Workers</strong><span>' + d.workerIds.join(', ') + '</span></div>'
+    + '<div class="ditem"><strong>Claims</strong><span>' + d.claimIds.length + '</span></div>'
+    + '<div class="ditem"><strong>Time</strong><span>' + fmtDate(d.timestamp) + '</span></div>'
+    + '</div>'
+    + '<div class="msgbox warn"><strong>⚠️ Resolution</strong><pre>All claims for this IP were forfeited. No worker was assigned due to multiple workers sharing the same IP when a wallet message arrived.</pre></div>';
+  document.getElementById('cl-body').innerHTML = html;
+  openModal('md-claim');
+}
+
+async function forfeitClaim(id) {
+  if (!confirm('Forfeit this pending claim?')) return;
+  try {
+    var d = await api('POST', '/api/admin/claims/' + id + '/forfeit');
+    if (!d.success) throw new Error(d.error);
+    loadPending(); loadClaims(); loadStats();
+  } catch(e) { alert(e.message); }
+}
+
+async function extendClaim(id) {
+  try {
+    var d = await api('POST', '/api/admin/claims/' + id + '/extend');
+    if (!d.success) throw new Error(d.error);
+    loadPending(); loadStats();
+  } catch(e) { alert(e.message); }
+}
+
+async function resolveDisputeForfeit(id) {
+  if (!confirm('Forfeit ALL claims in this dispute?')) return;
+  try {
+    var d = await api('POST', '/api/admin/disputes/' + id + '/forfeit');
+    if (!d.success) throw new Error(d.error);
+    loadDisputes(); loadClaims(); loadStats();
+  } catch(e) { alert(e.message); }
+}
+
+async function saveRules() {
+  var msg = document.getElementById('rules-msg');
+  try {
+    var d = await api('PUT', '/api/admin/rules', {
+      walletKeyword: document.getElementById('rl-keyword').value.trim(),
+      autoForwardPatterns: document.getElementById('rl-patterns').value.split(',').map(function(s){return s.trim()}).filter(Boolean),
+      pendingTimeoutHours: parseInt(document.getElementById('rl-timeout').value),
+      matchField: document.getElementById('rl-field').value
+    });
+    if (!d.success) throw new Error(d.error);
+    msg.className = 'fmsg ok'; msg.textContent = '✓ Rules saved';
+  } catch(e) { msg.className = 'fmsg err'; msg.textContent = '✗ ' + e.message; }
+}
+
+function esc(t) {
+  var d = document.createElement('div');
+  d.textContent = t;
+  return d.innerHTML;
+}
+
+// -- EVENT LISTENERS --
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('login-btn').addEventListener('click', doLogin);
+  document.getElementById('logout-btn').addEventListener('click', doLogout);
+  document.getElementById('refresh-workers').addEventListener('click', loadWorkers);
+  document.getElementById('cw-save').addEventListener('click', createWorker);
+  document.getElementById('ed-save').addEventListener('click', saveEditWorker);
+  document.getElementById('lk-save').addEventListener('click', saveLink);
+  document.getElementById('save-rules-btn').addEventListener('click', saveRules);
+
+  document.querySelectorAll('[data-close]').forEach(function(btn){
+    btn.addEventListener('click', function(){closeModal(this.dataset.close)});
+  });
+
+  document.querySelectorAll('.tab').forEach(function(t){
+    t.addEventListener('click', function(){showTab(this.dataset.tab)});
+  });
+
+  document.getElementById('sw-search').addEventListener('input', renderWorkers);
+  document.getElementById('sw-status').addEventListener('change', renderWorkers);
+  document.getElementById('sv-search').addEventListener('input', renderVisitors);
+  document.getElementById('sv-from').addEventListener('change', renderVisitors);
+  document.getElementById('sv-to').addEventListener('change', renderVisitors);
+  document.getElementById('sp-search').addEventListener('input', renderPending);
+  document.getElementById('sc-search').addEventListener('input', renderClaims);
+  document.getElementById('sc-status').addEventListener('change', renderClaims);
+  document.getElementById('sd-search').addEventListener('input', renderDisputes);
+
+  document.querySelectorAll('.overlay').forEach(function(o){
+    o.addEventListener('click', function(e){if(e.target===this)closeModal(this.id)});
+  });
+
+  document.getElementById('cf-ok').addEventListener('click', function(){
+    if (this.dataset.action === 'del-worker') doDelWorker();
+  });
+
+  document.getElementById('lk-url').addEventListener('keydown', function(e){if(e.key==='Enter')saveLink()});
+
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-a]');
+    if (!btn) return;
+    var a = btn.dataset.a, id = btn.dataset.id;
+    switch(a) {
+      case 'ed': editWorker(id); break;
+      case 'lk':
+        var w = workersData.find(function(x){return x.id===id});
+        openLinkModal(id, w?(w.referralLink||''):'', w?w.name:id);
+        break;
+      case 'tg': toggleW(id); break;
+      case 'dl':
+        var w2 = workersData.find(function(x){return x.id===id});
+        confirmDelWorker(id, w2?w2.name:id);
+        break;
+      case 'vc': viewClaim(id); break;
+      case 'vd': viewDispute(id); break;
+      case 'forfeit': forfeitClaim(id); break;
+      case 'extend': extendClaim(id); break;
+      case 'resolve-forfeit': resolveDisputeForfeit(id); break;
+    }
+  });
+
+  // ADDITION 3: Copy button handler
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('[data-copy]');
+    if (!btn) return;
+    var text = btn.dataset.copy;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text);
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    var orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(function(){ btn.textContent = orig; }, 1500);
+  });
+
+  // ADDITION 4: Regenerate code button
+  document.getElementById('lk-regen').addEventListener('click', regenerateCode);
+
+  // ADDITION 5: Auto-refresh every 30s
+  if (window._refreshInterval) clearInterval(window._refreshInterval);
+  window._refreshInterval = setInterval(function(){
+    if (document.getElementById('app').style.display !== 'none') loadAll();
+  }, 30000);
+
+  // ADDITION 6: Live pending timers
+  setInterval(function(){
+    document.querySelectorAll('.timer[data-expires]').forEach(function(el){
+      var expires = parseInt(el.dataset.expires);
+      if (!expires) return;
+      var diff = expires - Date.now();
+      if (diff <= 0) { el.textContent = 'EXPIRED'; el.style.color = '#ff3d5a'; return; }
+      var m = Math.floor(diff / 60000);
+      var s = Math.floor((diff % 60000) / 1000);
+      el.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+      el.style.color = m < 5 ? '#ff3d5a' : '#ffb300';
+    });
+  }, 1000);
+
+  // ADDITION 7: Refresh map button
+  document.getElementById('refresh-map').addEventListener('click', loadClickMap);
+
+  if (localStorage.getItem('adminSession')) showApp();
+});
+</script>
+</body>
+</html>
